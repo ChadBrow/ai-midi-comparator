@@ -1,8 +1,3 @@
-# from ast import arguments
-# from webbrowser import BackgroundBrowser
-# import logging
-# from re import L
-
 # The main file for this application.
 # To run, simply call program with MIDI input port as first argument
 # Chad Brown
@@ -58,7 +53,7 @@ def readFromFile():
             l += 1
 
     print(notes)
-    info = ScoreInfo(lenNote, timeSignature)
+    info = ScoreInfo(lenNote, time, timeSigNum=timeSignature)
     return notes, info
 
 # #make sure user input MIDI port
