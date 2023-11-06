@@ -10,11 +10,15 @@
 
 # from html.entities import name2codepoint
 import sys
-import time
 from mido import MidiFile
+from mido import open_input
 from rtmidi.midiutil import open_midiinput
 
-from midi_input_handler import MidiInputHandler
+from midi_comparator import MidiComparitor
+from score_info import ScoreInfo
+
+def printEvent(event):
+    print(event.__dict__)
 
 def readFromFile():
     #open are midi file
@@ -45,7 +49,7 @@ def readFromFile():
         time += msg.time
 
         if msg.type == "note_on":
-            if msg.velocity < 1: #for some reason musescore likes to express note_off as note_on w/ zero velocity
+            if msg.velocity < 1: #for some reason mido likes to express note_off as note_on w/ zero velocity
                 if msg.note not in notesCurrentlyActive:
                     continue #note is released without being pressed. Should never happen
                 notes[notesCurrentlyActive[msg.note]][2] = time
@@ -58,31 +62,33 @@ def readFromFile():
             l += 1
 
     print(notes)
-    return notes
+    info = ScoreInfo(lenNote, timeSignature)
+    return notes, info
 
-#make sure user input MIDI port
-if len(sys.argv) < 2:
-    sys.exit()
-livePort = sys.argv[1]
-print(livePort)
+# #make sure user input MIDI port
+# if len(sys.argv) < 2:
+#     sys.exit()
+# livePort = sys.argv[1]
+# print(livePort)
 
 #let us get the notes as they should be played
-scoreNotes = readFromFile()
+scoreNotes, info = readFromFile()
 
-#let us read the notes from midi input
-midiin, portName = open_midiinput(livePort)
+#start up game
+game = MidiComparitor(scoreNotes, info, keepMetronomeOn=True)
 
-#now we run
-try:
-    # Just wait for keyboard interrupt,
-    # everything else is handled via the input callback.
-    while True:
-        time.sleep(1)
-except KeyboardInterrupt:
-    print("Exiting prematurly.")
-    midiin.close_port()
-    del midiin
-finally:
-    print("Exit.")
-    midiin.close_port()
-    del midiin
+# #let us read the notes from midi input
+# inputPort = open_input(callback=printEvent)
+
+# #now we run
+# print("Entering main loop. Press Control-C to exit.")
+# try:
+#     # Just wait for keyboard interrupt,
+#     # everything else is handled via the input callback.
+#     while True:
+#         time.sleep(1)
+# except KeyboardInterrupt:
+#     print("Exiting prematurly.")
+# finally:
+#     inputPort.close()
+#     print("Exit.")
