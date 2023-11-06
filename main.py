@@ -11,14 +11,10 @@
 # from html.entities import name2codepoint
 import sys
 from mido import MidiFile
-from mido import open_input
-from rtmidi.midiutil import open_midiinput
+# from rtmidi.midiutil import open_midiinput
 
-from midi_comparator import MidiComparitor
+from midi_comparator import MidiComparator
 from score_info import ScoreInfo
-
-def printEvent(event):
-    print(event.__dict__)
 
 def readFromFile():
     #open are midi file
@@ -75,20 +71,5 @@ def readFromFile():
 scoreNotes, info = readFromFile()
 
 #start up game
-game = MidiComparitor(scoreNotes, info, keepMetronomeOn=True)
-
-# #let us read the notes from midi input
-# inputPort = open_input(callback=printEvent)
-
-# #now we run
-# print("Entering main loop. Press Control-C to exit.")
-# try:
-#     # Just wait for keyboard interrupt,
-#     # everything else is handled via the input callback.
-#     while True:
-#         time.sleep(1)
-# except KeyboardInterrupt:
-#     print("Exiting prematurly.")
-# finally:
-#     inputPort.close()
-#     print("Exit.")
+game = MidiComparator(scoreNotes, info, keepMetronomeOn=True)
+game.run()
