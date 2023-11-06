@@ -53,7 +53,7 @@ def readFromFile():
             l += 1
 
     print(notes)
-    info = ScoreInfo(lenNote, time, timeSigNum=timeSignature)
+    info = ScoreInfo(lenNote, time, timeSignature.numerator)
     return notes, info
 
 # #make sure user input MIDI port

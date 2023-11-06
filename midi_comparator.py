@@ -1,10 +1,8 @@
-# import time as ti
+import time as ti
 from apscheduler.schedulers.blocking import BlockingScheduler
 from concurrent.futures import ThreadPoolExecutor
 from mido import open_input
-from pygame import mixer
-# from playsound import playsound
-# import os
+from pygame import mixer, midi
 
 # class GameClock(threading.Thread):
 #     def __init__(self, comparator):
@@ -47,8 +45,9 @@ class MidiComparator:
 
         mixer.init()
         mixer.music.load("metronome.mp3")
-        # self.filePath = os.path.dirname(os.path.realpath(__file__))
-        # print(self.filePath)
+        # midi.init()
+        # self.midiPlayer = midi.Output(2)
+        # self.midiPlayer.set_instrument(0)
     
     def stop(self):
         if not self.running:
@@ -60,11 +59,18 @@ class MidiComparator:
         del self.sched
         self.missedNotes += self.score
         self.postGameAnalysis()
+
+        # del self.midiPlayer
+        # midi.quit()
     
     def run(self):
         #here we run the game
         if self.running:
             return
+        
+        #metronome count in
+        self.countIn()
+
         #threading because we are going to be doing a lot very quickly
         self.running = True
         with ThreadPoolExecutor() as executor:
@@ -74,11 +80,10 @@ class MidiComparator:
             try:
                 self.sched.start()
             except KeyboardInterrupt: #accept ^C as exit
-                print("Exiting prematurly.")
+                print("Finishing---------.")
             finally:
                 # clock.stop()
                 self.stop()
-                print("Exit.")
     
     def printEvent(event):
         print(event.__dict__)
@@ -86,7 +91,7 @@ class MidiComparator:
     def tick(self):
         if self.metronomeOn:
             pass
-        if self.tickClock > self.info.length + 720:
+        if self.tickClock > self.info.length * 2:
             self.stop()
         if self.tickClock % 480 == 0:
             mixer.music.play()
@@ -103,6 +108,8 @@ class MidiComparator:
         if msg.type == "note_on" or msg.type == "note_off":
             if msg.velocity == 0:
                 #this is a note off message
+                #start by playing the note
+                # self.midiPlayer.note_off(msg.note, msg.velocity)
                 if msg.note not in self.pressedNotes:
                     #note was released without being pressed. Should never happend
                     return
@@ -118,6 +125,8 @@ class MidiComparator:
                 return
             
             #this is a note on message
+            #start by playing the note
+            # self.midiPlayer.note_on(msg.note, msg.velocity)
             self.pressedNotes[msg.note] = [msg.note, time, -1]
 
     def compare(self, note):
@@ -153,7 +162,7 @@ class MidiComparator:
         
         #pop the note we matched from the score. So long as the maxTickDif isn't too great then this should be alright
         if indexBest > -1:
-            self.score.pop(i)
+            self.score.pop(indexBest)
 
         return curBest
     
@@ -161,3 +170,8 @@ class MidiComparator:
         print("Game Over")
         print("Number of notes hit:", len(self.hitNotes))
         print("Number of notes missed:", len(self.missedNotes))
+    
+    def countIn(self):
+        for i in range(2 * self.info.timeSigNum):
+            mixer.music.play()
+            ti.sleep(self.info.tempo / 1000000)
