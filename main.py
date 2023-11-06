@@ -2,11 +2,7 @@
 # To run, simply call program with MIDI input port as first argument
 # Chad Brown
 # Last updated: 05/11/2023
-
-# from html.entities import name2codepoint
-import sys
 from mido import MidiFile
-# from rtmidi.midiutil import open_midiinput
 
 from midi_comparator import MidiComparator
 from score_info import ScoreInfo
