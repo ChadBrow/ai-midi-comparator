@@ -1,3 +1,4 @@
+from logging.handlers import TimedRotatingFileHandler
 import time as ti
 from apscheduler.schedulers.blocking import BlockingScheduler
 from concurrent.futures import ThreadPoolExecutor
@@ -204,6 +205,17 @@ class MidiComparator:
         print("Game Over")
         print("Number of notes hit:", len(self.hitNotes))
         print("Number of notes missed:", len(self.missedNotes))
+
+        totalTimeDif = 0
+        for note in self.hitNotes:
+            totalTimeDif += note[2]
+        print("Average time difference:", totalTimeDif / self.hitNotes * self.tickTime * 1000000, "ms")
+        if totalTimeDif / self.hitNotes > 120:
+            print("You dragged a bit.")
+        elif totalTimeDif / self.hitNotes < -120:
+            print("You rushed a bit.")
+        else:
+            print("You were on time.")
     
     def countIn(self):
         for i in range(2 * self.info.timeSigNum):
