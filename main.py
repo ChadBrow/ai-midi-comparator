@@ -5,7 +5,7 @@
 from mido import MidiFile
 
 from midi_comparator import MidiComparator
-from score_info import ScoreInfo
+from util import ScoreInfo, Note
 
 def readFromFile():
     #open are midi file
@@ -39,16 +39,18 @@ def readFromFile():
             if msg.velocity < 1: #for some reason mido likes to express note_off as note_on w/ zero velocity
                 if msg.note not in notesCurrentlyActive:
                     continue #note is released without being pressed. Should never happen
-                notes[notesCurrentlyActive[msg.note]][2] = time
+                notes[notesCurrentlyActive[msg.note]].end = time
                 del notesCurrentlyActive[msg.note]
                 continue
             if msg.note in notesCurrentlyActive:
                 continue #note is pressed again when it is already pressed. Should never happen
             notesCurrentlyActive[msg.note] = l
-            notes.append([msg.note, time, -1])
+            notes.append(Note(msg.note, time, -1, msg.velocity))
             l += 1
 
-    print(notes)
+    for note in notes:
+        print(note, end="  ")
+    print()
     info = ScoreInfo(lenNote, time, timeSignature.numerator)
     return notes, info
 
