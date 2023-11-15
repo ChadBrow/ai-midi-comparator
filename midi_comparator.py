@@ -72,7 +72,6 @@ class MidiComparator:
     def stop(self):
         if not self.running:
             return
-        print("Stopping")
         self.running = False
 
         #remove scheduled job
@@ -112,7 +111,7 @@ class MidiComparator:
                 #     for msg in self.port.iter_pending():
                 #         self.processMessage(msg, self.tickClock) 
             except KeyboardInterrupt: #accept ^C as exit
-                print("Finishing---------.")
+                print("-----------------Post Game Analysis-----------------")
             finally:
                 # clock.stop()
                 self.stop()
@@ -153,12 +152,10 @@ class MidiComparator:
                 match = self.compare(note)
                 #if we get a match then great
                 if match:
-                    print(match)
                     self.hitNotes.append(match)
                 return
             
             #this is a note on message
-            print(msg.note, msg.velocity)
             self.piano.noteon(0, msg.note, msg.velocity)
             #start by playing the note
             # self.midiPlayer.note_on(msg.note, msg.velocity)
@@ -209,10 +206,11 @@ class MidiComparator:
         totalTimeDif = 0
         for note in self.hitNotes:
             totalTimeDif += note[2]
-        print("Average time difference:", totalTimeDif / self.hitNotes * self.tickTime * 1000000, "ms")
-        if totalTimeDif / self.hitNotes > 120:
+        avgTimeDif = totalTimeDif / len(self.hitNotes)
+        print(f"Average time difference: {avgTimeDif * self.tickTime:.4f}s or {avgTimeDif / 480:.4f} beats")
+        if avgTimeDif > 120:
             print("You dragged a bit.")
-        elif totalTimeDif / self.hitNotes < -120:
+        elif avgTimeDif < -60:
             print("You rushed a bit.")
         else:
             print("You were on time.")
