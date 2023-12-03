@@ -3,9 +3,14 @@
 # Chad Brown
 # Last updated: 05/11/2023
 from mido import MidiFile
+from music21 import converter
+import sys
+import os
 
 from midi_comparator import MidiComparator
 from util import ScoreInfo, Note
+from ui import UI
+
 
 def readFromFile():
     #open are midi file
@@ -61,8 +66,27 @@ def readFromFile():
 # print(livePort)
 
 #let us get the notes as they should be played
-scoreNotes, info = readFromFile()
+# scoreNotes, info = readFromFile()
+lily = converter.subConverters.ConverterLilypond()
+
+s = converter.parse("test_files/Test2.mid")
+lily.write(s, fmt="png", fp='score0', subformats="png")
+os.remove('score0')
+s = converter.parse("test_files/Test1.mid")
+lily.write(s, fmt="png", fp='score1', subformats="png")
+os.remove('score1')
+
+# app = QApplication(sys.argv)
+# MainWindow(2)
+# sys.exit(app.exec_())
+# app = QApplication(sys.argv)
+# win = QMainWindow()
+# win.setGeometry(200,200,300,300) # sets the windows x, y, width, height
+# win.setWindowTitle("My first window!")
+UI(sys)
 
 #start up game
-game = MidiComparator(scoreNotes, info, keepMetronomeOn=True)
-game.run()
+# game = MidiComparator(scoreNotes, info, keepMetronomeOn=True)
+# game.run()
+
+
