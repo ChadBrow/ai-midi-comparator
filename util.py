@@ -22,7 +22,7 @@ class Note:
 
 def readFromFile(fileName):
     #open are midi file
-    file = MidiFile(f'test_files/{fileName}')
+    file = MidiFile(f'midi_files/{fileName}')
 
     # for i, track in enumerate(file.tracks):
     #     print('Track {}: {}'.format(i, track.name))
