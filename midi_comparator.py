@@ -1,12 +1,15 @@
-from logging.handlers import TimedRotatingFileHandler
 import time as ti
 from apscheduler.schedulers.blocking import BlockingScheduler
+from apscheduler.schedulers.background import BackgroundScheduler
 from concurrent.futures import ThreadPoolExecutor
 from mido import open_input
-from pygame import mixer, midi
+import pygame
+import threading
 from pyfluidsynth_rip.fluidsynth import Synth
 
 from util import Note
+import ui
+# from ui import PygameUI
 
 
 # class GameClock(threading.Thread):
@@ -29,15 +32,17 @@ from util import Note
 #             self.comparator.tick(self.tickClock)
 
 class MidiComparator:
-    def __init__(self, score, scoreInfo, keepMetronomeOn=False, pianoFont="grand_piano.sf2"):
+    def __init__(self, score, scoreInfo, img, keepMetronomeOn=False, pianoFont="grand_piano.sf2"):
         self.time = 0
         self.score = score
         self.info = scoreInfo
         self.keepMetronomeOn = keepMetronomeOn
+        self.img = img
 
         self.metronomeOn = True
         self.tickTime = scoreInfo.tempo / (480 * 1000000) #will likely need to slow this down
-        self.tickClock = 0
+        self.tickClock = -480 * scoreInfo.timeSigNum
+        self.beat = -3
 
         self.running = False
 
@@ -48,8 +53,8 @@ class MidiComparator:
         self.missedNotes = []
         self.hitNotes = []
 
-        mixer.init()
-        mixer.music.load("metronome.mp3")
+        pygame.mixer.init()
+        pygame.mixer.music.load("metronome.mp3")
         # midi.init()
         # self.piano = midi.Output(0)
         # self.piano.set_instrument(0)
@@ -68,6 +73,7 @@ class MidiComparator:
         # # metronomeFont = self.metronome.sfload("soundfonts/metronome.sf2")
         self.piano.program_select(0, pianoFont, 0, 0)
 
+        # self.ui = PygameUI()
     
     def stop(self):
         if not self.running:
@@ -75,9 +81,11 @@ class MidiComparator:
         self.running = False
 
         #remove scheduled job
-        self.sched.remove_job('clock')
-        self.sched.shutdown()
-        del self.sched
+        # self.sched.remove_job('clock')
+        # self.sched.shutdown()
+        # del self.sched
+
+        pygame.quit()
 
         #delete our synths
         self.piano.delete()
@@ -88,6 +96,8 @@ class MidiComparator:
 
         self.postGameAnalysis()
 
+        # self.ui.quit()
+
         # del self.midiPlayer
         # midi.quit()
     
@@ -96,25 +106,45 @@ class MidiComparator:
         if self.running:
             return
         
+        #start ui
+        self.ui = ui.PygameUI(self.img)
+
+        #start clock and set timer
+        clock = pygame.time.Clock()
+        print(self.tickTime * 1000)
+        pygame.time.set_timer(ui.TICK, int(self.tickTime * 4000))
+
         #metronome count in
-        self.countIn()
+        # self.countIn()
 
         #threading because we are going to be doing a lot very quickly
         self.running = True
-        with ThreadPoolExecutor() as executor:
-            #we use blocking scheduler to make sure that we run tick at the exact same increment no matter how long it takes
-            self.sched = BlockingScheduler({'apscheduler.job_defaults.max_instances': 4})
-            self.sched.add_job(self.tick, "interval", seconds=self.tickTime, id='clock')
-            try:
-                self.sched.start()
-                # while True:
-                #     for msg in self.port.iter_pending():
-                #         self.processMessage(msg, self.tickClock) 
-            except KeyboardInterrupt: #accept ^C as exit
-                print("-----------------Post Game Analysis-----------------")
-            finally:
-                # clock.stop()
-                self.stop()
+        while(self.running):
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT: #check for exit
+                    self.stop()
+                if event.type == ui.TICK:
+                    if self.tickClock % 480 == 0:
+                        if self.metronomeOn:
+                            pygame.mixer.music.play()
+                        self.ui.beat.update_text("Beat")
+                    self.tickClock += 4
+                self.ui.manager.process_events(event)
+            
+            for msg in self.port.iter_pending():
+                thread = threading.Thread(target=self.processMessage, args=[msg, self.tickClock])
+                thread.start()
+            
+            self.ui.tick(clock.tick()/1000)
+        # with ThreadPoolExecutor() as executor: #this is used for threading
+        #     #we use blocking scheduler to make sure that we run tick at the exact same increment no matter how long it takes
+        #     self.sched = BlockingScheduler({'apscheduler.job_defaults.max_instances': 8})
+        #     self.sched.add_job(self.tick, "interval", seconds=self.tickTime, id='clock')
+        #     try:
+        #         self.sched.start() 
+        #     except KeyboardInterrupt: #accept ^C as exit
+        #         print("-----------------Post Game Analysis-----------------")
+        #         self.stop()    
     
     def printEvent(event):
         print(event.__dict__)
@@ -125,7 +155,7 @@ class MidiComparator:
         if self.tickClock > self.info.length * 200:
             self.stop()
         if self.tickClock % 480 == 0:
-            mixer.music.play()
+            pygame.mixer.music.play()
         # print("Tick---------")
         # print(time.time())s
         # print(self.tickClock)
@@ -152,6 +182,7 @@ class MidiComparator:
                 match = self.compare(note)
                 #if we get a match then great
                 if match:
+                    print(match)
                     self.hitNotes.append(match)
                 return
             
@@ -198,6 +229,9 @@ class MidiComparator:
 
         return curBest
     
+    def updateUI(self):
+        self.ui.tickNum.set_text(f'Tick: {self.tickClock}')
+    
     def postGameAnalysis(self):
         print("Game Over")
         print("Number of notes hit:", len(self.hitNotes))
@@ -217,5 +251,5 @@ class MidiComparator:
     
     def countIn(self):
         for i in range(2 * self.info.timeSigNum):
-            mixer.music.play()
+            pygame.mixer.music.play()
             ti.sleep(self.info.tempo / 1000000)

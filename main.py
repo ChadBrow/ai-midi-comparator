@@ -6,10 +6,11 @@ from mido import MidiFile
 from music21 import converter
 import sys
 import os
+import threading
 
 from midi_comparator import MidiComparator
 from util import ScoreInfo, Note
-from ui import UI
+from ui import PygameUI
 
 
 def readFromFile():
@@ -59,23 +60,16 @@ def readFromFile():
     info = ScoreInfo(lenNote, time, timeSignature.numerator)
     return notes, info
 
-# #make sure user input MIDI port
-# if len(sys.argv) < 2:
-#     sys.exit()
-# livePort = sys.argv[1]
-# print(livePort)
-
-#let us get the notes as they should be played
-# scoreNotes, info = readFromFile()
 lily = converter.subConverters.ConverterLilypond()
 
 s = converter.parse("test_files/Test2.mid")
 lily.write(s, fmt="png", fp='score0', subformats="png")
 os.remove('score0')
-s = converter.parse("test_files/Test1.mid")
-lily.write(s, fmt="png", fp='score1', subformats="png")
-os.remove('score1')
+# s = converter.parse("test_files/Test1.mid")
+# lily.write(s, fmt="png", fp='score1', subformats="png")
+# os.remove('score1')
 
+# Testing stuff
 # app = QApplication(sys.argv)
 # MainWindow(2)
 # sys.exit(app.exec_())
@@ -83,10 +77,31 @@ os.remove('score1')
 # win = QMainWindow()
 # win.setGeometry(200,200,300,300) # sets the windows x, y, width, height
 # win.setWindowTitle("My first window!")
-UI(sys)
+# UI(sys)
 
-#start up game
-# game = MidiComparator(scoreNotes, info, keepMetronomeOn=True)
-# game.run()
+
+
+
+
+def runGame(img):
+    #let us get the notes as they should be played
+    scoreNotes, info = readFromFile()
+
+    #start up game
+    game = MidiComparator(scoreNotes, info, img, keepMetronomeOn=True)
+    game.run()
+    # gameEngine = threading.Thread(target=game.run)
+    # gameEngine.start()
+
+    #start UI
+    # ui = PygameUI()
+
+runGame('score0.png')
+
+
+
+
+
+
 
 
