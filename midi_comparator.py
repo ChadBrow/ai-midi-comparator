@@ -9,27 +9,6 @@ from pyfluidsynth_rip.fluidsynth import Synth
 
 from util import Note
 import ui
-# from ui import PygameUI
-
-
-# class GameClock(threading.Thread):
-#     def __init__(self, comparator):
-#         self.comparator = comparator
-#         self.stopped = threading.Event()
-#         self.tickClock = 0
-#         self.timeClock = 0
-#         self.tickTime = self.comparator.tickTime
-    
-#     def stop(self):
-#         self.stopped.set()
-    
-#     def run(self):
-#         print("Running")
-#         self.startTime = time.time()
-#         print(self.startTime)
-#         while not self.stopped.wait(self.tickTime):
-#             self.tickClock += 1
-#             self.comparator.tick(self.tickClock)
 
 class MidiComparator:
     def __init__(self, score, scoreInfo, img, keepMetronomeOn=False, pianoFont="grand_piano.sf2"):
