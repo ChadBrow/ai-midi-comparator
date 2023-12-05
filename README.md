@@ -4,7 +4,7 @@ Grand piano sound font courtesy of: https://musical-artifacts.com/artifacts/1660
 
 ### Installing
 
-There are many libraries that need to be installed before you can this program
+There are many libraries that need to be installed before you can run this program
 
 1. mido (I used version 1.3.0)
 `pip install mido`
