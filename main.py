@@ -57,7 +57,7 @@ def readFromFile():
     for note in notes:
         print(note, end="  ")
     print()
-    info = ScoreInfo(lenNote, time, timeSignature.numerator)
+    info = ScoreInfo(lenNote, time, timeSignature.numerator, timeSigDen=timeSignature.denominator)
     return notes, info
 
 lily = converter.subConverters.ConverterLilypond()

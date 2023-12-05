@@ -7,6 +7,7 @@ class ScoreInfo:
         self.tempo = tempo
         self.length = length #in ticks
         self.timeSigNum = timeSigNum
+        self.timeSigDen = timeSigDen if timeSigDen else 4
 
 class Note:
     def __init__(self, val, start, end, vel):

@@ -150,12 +150,16 @@ class PygameUI():
 
         #labels
         self.beat = pygame_gui.elements.UILabel(relative_rect=pygame.Rect(0.8 * self.width, 0.1 * self.height, 200, 50),
-                                                   text="Beat\n", manager=self.manager)
+                                                   text="Beat", manager=self.manager)
         
         #sheet music
         self.musicPage = pygame_gui.elements.UIImage(relative_rect=pygame.Rect(0.1 * self.width, 0.1 * self.height, 0.4 * self.width, 0.8 * self.height),
                                                    image_surface=pygame.image.load(os.path.abspath(img)), 
                                                    manager=self.manager)
+        
+        #exit button
+        self.exitButton = pygame_gui.elements.UIButton(relative_rect=pygame.Rect(0.8 * self.width, 0.5 * self.height, 200, 50),
+                                                   text="Exit", manager=self.manager)
 
         # background = pygame.Surface((800, 600))
         # background.fill(pygame.Color('#000000'))

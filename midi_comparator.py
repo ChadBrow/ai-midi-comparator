@@ -1,9 +1,9 @@
 import time as ti
-from apscheduler.schedulers.blocking import BlockingScheduler
-from apscheduler.schedulers.background import BackgroundScheduler
-from concurrent.futures import ThreadPoolExecutor
 from mido import open_input
+import math
+import sys
 import pygame
+import pygame_gui
 import threading
 from pyfluidsynth_rip.fluidsynth import Synth
 
@@ -42,7 +42,7 @@ class MidiComparator:
         self.metronomeOn = True
         self.tickTime = scoreInfo.tempo / (480 * 1000000) #will likely need to slow this down
         self.tickClock = -480 * scoreInfo.timeSigNum
-        self.beat = -3
+        self.beat = -4
 
         self.running = False
 
@@ -54,7 +54,7 @@ class MidiComparator:
         self.hitNotes = []
 
         pygame.mixer.init()
-        pygame.mixer.music.load("metronome.mp3")
+        pygame.mixer.music.load("soundfonts/metronome.mp3")
         # midi.init()
         # self.piano = midi.Output(0)
         # self.piano.set_instrument(0)
@@ -96,10 +96,7 @@ class MidiComparator:
 
         self.postGameAnalysis()
 
-        # self.ui.quit()
-
-        # del self.midiPlayer
-        # midi.quit()
+        sys.exit()
     
     def run(self):
         #here we run the game
@@ -111,23 +108,28 @@ class MidiComparator:
 
         #start clock and set timer
         clock = pygame.time.Clock()
-        print(self.tickTime * 1000)
         pygame.time.set_timer(ui.TICK, int(self.tickTime * 4000))
 
         #metronome count in
         # self.countIn()
 
         #threading because we are going to be doing a lot very quickly
+        print(pygame_gui.UI_BUTTON_PRESSED)
         self.running = True
         while(self.running):
             for event in pygame.event.get():
+                print(event)
                 if event.type == pygame.QUIT: #check for exit
                     self.stop()
+                if event.type == pygame_gui.UI_BUTTON_PRESSED:
+                    if hasattr(event, 'ui_element') and event.ui_element == self.ui.exitButton:
+                        self.stop()
                 if event.type == ui.TICK:
                     if self.tickClock % 480 == 0:
                         if self.metronomeOn:
                             pygame.mixer.music.play()
-                        self.ui.beat.update_text("Beat")
+                        self.ui.beat.set_text(f"Beat: {math.floor(self.beat / self.info.timeSigDen)}.{(self.beat % self.info.timeSigDen) + 1}")
+                        self.beat += 1
                     self.tickClock += 4
                 self.ui.manager.process_events(event)
             
@@ -240,7 +242,7 @@ class MidiComparator:
         totalTimeDif = 0
         for note in self.hitNotes:
             totalTimeDif += note[2]
-        avgTimeDif = totalTimeDif / len(self.hitNotes)
+        avgTimeDif = totalTimeDif / max(len(self.hitNotes), 1)
         print(f"Average time difference: {avgTimeDif * self.tickTime:.4f}s or {avgTimeDif / 480:.4f} beats")
         if avgTimeDif > 120:
             print("You dragged a bit.")
