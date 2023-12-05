@@ -20,14 +20,15 @@ class MidiComparator:
 
         self.metronomeOn = True
         self.tickTime = scoreInfo.tempo / (480 * 1000000) #will likely need to slow this down
-        self.tickClock = -480 * scoreInfo.timeSigNum
+        self.tickClock = -960 * scoreInfo.timeSigNum
         self.beat = -4
+        self.status = 0 #negative for rushing, pos for dragging
 
         self.running = False
 
         self.port = open_input()
 
-        self.maxTickDif = 480 #for our comparison func we will only consider notes within one beat
+        self.maxTickDif = 960 #for our comparison func we will only consider notes within one beat
         self.pressedNotes = {}
         self.missedNotes = []
         self.hitNotes = []
@@ -59,11 +60,7 @@ class MidiComparator:
             return
         self.running = False
 
-        #remove scheduled job
-        # self.sched.remove_job('clock')
-        # self.sched.shutdown()
-        # del self.sched
-
+        # exit pygame
         pygame.quit()
 
         #delete our synths
@@ -87,31 +84,38 @@ class MidiComparator:
 
         #start clock and set timer
         clock = pygame.time.Clock()
-        pygame.time.set_timer(ui.TICK, int(self.tickTime * 4000))
+        pygame.time.set_timer(ui.TICK, int(self.tickTime * 6000))
 
         #metronome count in
         # self.countIn()
 
         #threading because we are going to be doing a lot very quickly
-        print(pygame_gui.UI_BUTTON_PRESSED)
         self.running = True
-        while(self.running):
+        while(self.running): #event/render loop
+            #handle pygame events
             for event in pygame.event.get():
-                print(event)
                 if event.type == pygame.QUIT: #check for exit
                     self.stop()
-                if event.type == pygame_gui.UI_BUTTON_PRESSED:
+                if event.type == pygame_gui.UI_BUTTON_PRESSED: 
+                    #check for quit button pressed
                     if hasattr(event, 'ui_element') and event.ui_element == self.ui.exitButton:
                         self.stop()
-                if event.type == ui.TICK:
+                if event.type == ui.TICK: #check for tick
                     if self.tickClock % 480 == 0:
                         if self.metronomeOn:
                             pygame.mixer.music.play()
                         self.ui.beat.set_text(f"Beat: {math.floor(self.beat / self.info.timeSigDen)}.{(self.beat % self.info.timeSigDen) + 1}")
                         self.beat += 1
-                    self.tickClock += 4
+                    self.tickClock += 6
+                if event.type == ui.GOOD: #update status to good
+                    self.ui.status.set_text("Status: GOOD")
+                if event.type == ui.DRAGGING: #update status to dragging
+                    self.ui.status.set_text("Status: DRAGGING")
+                if event.type == ui.RUSHING: #update status to rushing
+                    self.ui.status.set_text("Status: RUSHING")
                 self.ui.manager.process_events(event)
             
+            #handle any new MIDI inputs
             for msg in self.port.iter_pending():
                 thread = threading.Thread(target=self.processMessage, args=[msg, self.tickClock])
                 thread.start()
@@ -137,9 +141,6 @@ class MidiComparator:
             self.stop()
         if self.tickClock % 480 == 0:
             pygame.mixer.music.play()
-        # print("Tick---------")
-        # print(time.time())s
-        # print(self.tickClock)
         for msg in self.port.iter_pending():
             self.processMessage(msg, self.tickClock)
 
@@ -163,8 +164,35 @@ class MidiComparator:
                 match = self.compare(note)
                 #if we get a match then great
                 if match:
-                    print(match)
                     self.hitNotes.append(match)
+   
+                    #if the last two beats (on average) have dragged or rushed, then we send a message about that
+                    #we base this off when notes start because we usually perceive time feel based on when
+                    #notes begin
+                    runningTotDif = 0
+                    numRecentNotes = 0
+                    for hitPair in reversed(self.hitNotes):
+                        #we only want to look back two beats
+                        if hitPair[0].start < self.time - self.maxTickDif:
+                            break
+                        runningTotDif += hitPair[2]
+                        numRecentNotes += 1
+                    runningAvgDif = runningTotDif / max(numRecentNotes, 1)
+
+                    if runningAvgDif > 120:
+                        if self.status <= 0:
+                            #we only want to post pygame event if status has actually changed. 
+                            #Otherwise no change is necessary
+                            self.status = 1
+                            pygame.event.post(pygame.event.Event(ui.DRAGGING))
+                    elif runningAvgDif < -60:
+                        if self.status >= 0:
+                            self.status = -1
+                            pygame.event.post(pygame.event.Event(ui.RUSHING))
+                    else:
+                        if self.status != 0:
+                            self.status = 0
+                            pygame.event.post(pygame.event.Event(ui.GOOD))
                 return
             
             #this is a note on message
@@ -219,8 +247,8 @@ class MidiComparator:
         print("Number of notes missed:", len(self.missedNotes))
 
         totalTimeDif = 0
-        for note in self.hitNotes:
-            totalTimeDif += note[2]
+        for notePair in self.hitNotes:
+            totalTimeDif += notePair[2]
         avgTimeDif = totalTimeDif / max(len(self.hitNotes), 1)
         print(f"Average time difference: {avgTimeDif * self.tickTime:.4f}s or {avgTimeDif / 480:.4f} beats")
         if avgTimeDif > 120:

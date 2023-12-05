@@ -16,7 +16,7 @@ def runGame(fileName):
     #generate image of score
     lily = converter.subConverters.ConverterLilypond()
 
-    s = converter.parse("test_files/Test2.mid")
+    s = converter.parse(f"midi_files/{fileName}")
     lily.write(s, fmt="png", fp='score0', subformats="png")
     os.remove('score0')
 
@@ -24,7 +24,11 @@ def runGame(fileName):
     game = MidiComparator(scoreNotes, info, 'score0.png', keepMetronomeOn=True)
     game.run()
 
-runGame('Test2.mid')
+if len(sys.argv) < 2:
+    print("Program reuires 1 positional argument: the name of the midi file to use.")
+    sys.exit()
+
+runGame(sys.argv[1])
 
 
 
