@@ -26,3 +26,5 @@ Lilypond will throw some errors during execution, but you should be able to igno
 ### Running the program
 
 Simply run main.py and pass in the name of the midi file you want to play along with. This midi file should be saved in test_files. For example to play along with Test2.mid in test_files enter `python3 main.py Test2.mid`.
+
+**This program does a require a midi device to be plugged into a midi port in order to run. I have yet to find an application that can act as an alternative to a Midi keyboard, but I will update the ReadMe if I do.**
