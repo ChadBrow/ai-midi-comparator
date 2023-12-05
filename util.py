@@ -1,10 +1,7 @@
 # Auxiliary file that defines a class used to store info about scores
 # Chad Brown
 # Last updated: 05/12/2023
-from music21 import converter
 from mido import MidiFile
-import os
-from midi_comparator import MidiComparator
 
 class ScoreInfo:
     def __init__(self, tempo, length, timeSigNum, timeSigDen=None, key=None):
@@ -69,18 +66,3 @@ def readFromFile(fileName):
     print()
     info = ScoreInfo(lenNote, time, timeSignature.numerator, timeSigDen=timeSignature.denominator)
     return notes, info
-
-def runGame(fileName):
-    #let us get the notes as they should be played
-    scoreNotes, info = readFromFile(fileName)
-
-    #generate image of score
-    lily = converter.subConverters.ConverterLilypond()
-
-    s = converter.parse("test_files/Test2.mid")
-    lily.write(s, fmt="png", fp='score0', subformats="png")
-    os.remove('score0')
-
-    #start up game
-    game = MidiComparator(scoreNotes, info, 'score0', keepMetronomeOn=True)
-    game.run()
