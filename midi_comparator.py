@@ -26,7 +26,11 @@ class MidiComparator:
 
         self.running = False
 
-        self.port = open_input()
+        try: #open midi input
+            self.port = open_input()
+        except OSError:
+            print("Must connect a midi input device before running.")
+            sys.exit()
 
         self.maxTickDif = 960 #for our comparison func we will only consider notes within one beat
         self.pressedNotes = {}
