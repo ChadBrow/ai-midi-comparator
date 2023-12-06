@@ -1,3 +1,7 @@
+# The Pygame UI for the midi comparator
+# Chad Brown
+# Last updated: 06/12/2023
+
 import pygame
 import pygame_gui
 import os

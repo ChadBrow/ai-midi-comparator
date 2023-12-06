@@ -1,10 +1,13 @@
+# The main engine of the MIDI comparator, does all the comparing and rel time MIDI reading
+# Chad Brown
+# Last updated: 06/12/2023
 import time as ti
 from mido import open_input
 import math
 import sys
 import pygame
 import pygame_gui
-import threading
+# import threading
 from pyfluidsynth_rip.fluidsynth import Synth
 
 from util import Note
@@ -121,8 +124,10 @@ class MidiComparator:
             
             #handle any new MIDI inputs
             for msg in self.port.iter_pending():
-                thread = threading.Thread(target=self.processMessage, args=[msg, self.tickClock])
-                thread.start()
+                # It actually runs better without being threaded.
+                # thread = threading.Thread(target=self.processMessage, args=[msg, self.tickClock])
+                # thread.start()
+                self.processMessage(msg, self.tickClock)
             
             self.ui.tick(clock.tick()/1000)
         # with ThreadPoolExecutor() as executor: #this is used for threading

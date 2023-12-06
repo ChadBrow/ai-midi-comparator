@@ -39,7 +39,6 @@ def readFromFile(fileName):
     #now we can start reading 
     # note: all time values are given in ticks. MIDI has 480 ticks per beat (quarter note) 
     # or tempo/480 microseconds per tick
-    print(timeSignature.numerator, '=', lenNote)
     # print(track)
     notes = [] #this list'll keep track of all the notes in order of when they're first pressed
     notesCurrentlyActive = {} #this dict will keep track of all the unended notes as well as their index in the list
@@ -61,8 +60,5 @@ def readFromFile(fileName):
             notes.append(Note(msg.note, time, -1, msg.velocity))
             l += 1
 
-    for note in notes:
-        print(note, end="  ")
-    print()
     info = ScoreInfo(lenNote, time, timeSignature.numerator, timeSigDen=timeSignature.denominator)
     return notes, info
