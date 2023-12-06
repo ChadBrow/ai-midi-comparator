@@ -1,4 +1,4 @@
-# ai-midi-comparitor
+# ai-midi-comparator
 
 Grand piano sound font courtesy of: https://musical-artifacts.com/artifacts/1660
 
